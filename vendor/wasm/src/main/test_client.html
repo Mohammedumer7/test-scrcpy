@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<script type='text/javascript'>
+    var statusElement = document.getElementById('status');
+    var progressElement = document.getElementById('progress');
+    var spinnerElement = document.getElementById('spinner');
+
+    var globalModule = {
+        'print': function(text) { console.log('stdout: ' + text); },
+        'printErr': function(text) { console.log('stderr: ' + text); }
+    };
+
+</script>
+<script src="Broadway/Decoder.js"></script>
+<script src="Broadway/YUVCanvas.js"></script>
+<script src="Broadway/Player.js"></script>
+<script src="Broadway/main.js"></script>
+<script>
+
+    var xhr = new XMLHttpRequest();
+
+    xhr.open('GET', 'Broadway/avc.wasm', true);
+    xhr.responseType = 'arraybuffer';
+
+    xhr.onload = function () {
+        globalModule.wasmBinary = xhr.response;
+        runClient();
+    };
+    xhr.send(null);
+
+</script>
+
+
+</body>
+</html>

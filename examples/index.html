@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Video Stream</title>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/Broadway/0.1.0/Player.min.js"
+      integrity="sha512-aXgw2NdMCrv5oZ6AZWIfLzDQrs6BaGZBIiBmAoAiOZqdlgy9Lo5+Fhw0T8vx9Uwg9Mv8GFmqm57uX4U+VaMY2w=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="Decoder.js"></script>
+    <script src="Player.js"></script>
+    <script src="YUVWebGLCanvas.js"></script>
+    <script type="module">
+      import VideoConverter from "https://cdn.jsdelivr.net/npm/h264-converter@0.1.4/+esm";
+      // console.log(new VideoConverter.default());
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // const canvas = document.getElementById("canvas");
+        const canvas = document.getElementById("videoCanvas");
+        const context = canvas.getContext("2d");
+
+        // Setup VideoConverter
+        // const converter = VideoConverter;
+
+        // Start WebSocket connection
+        const converter = new VideoConverter.default(canvas, 30, 6);
+
+        // Start WebSocket connection
+        const websocket = new WebSocket("ws://localhost:3000"); // Replace with your WebSocket URL
+        const width = 640;
+        const height = 480;
+
+        let imageDataArray = new Uint8ClampedArray(width * height * 4);
+        websocket.addEventListener("open", () => {
+          console.log("WebSocket connection opened");
+        });
+
+        var p = new Player({
+          useWorker: true, // Use worker thread for decoding
+          workerFile: "Decoder.js", // Path to Decoder.js
+          webgl: "auto", // Use webgl (auto-detect)
+          size: { width: 640, height: 480 }, // Initial canvas size
+        });
+
+        p.canvas = canvas;
+        websocket.addEventListener("message", async (event) => {
+          const blobData = event.data;
+
+          // Convert Blob to ArrayBuffer
+          const arrayBuffer = await blobToArrayBuffer(blobData);
+
+          // Convert ArrayBuffer to Uint8Array
+          const receivedData = new Uint8Array(arrayBuffer);
+
+          console.log(receivedData);
+
+          // Decode and play the H.264 video frames using h264-converter
+          converter.appendRawData(receivedData);
+
+          // Set up the canvas
+
+          // Attach the canvas where you want it in the HTML
+
+          // Example: Load H.264 data and decode
+          var h264Data = receivedData;
+          p.decode(h264Data);
+
+          // Ensure that the received data length is a multiple of (4 * width
+        });
+
+        async function blobToArrayBuffer(blob) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = function () {
+              resolve(reader.result);
+            };
+
+            reader.onerror = function (error) {
+              reject(error);
+            };
+
+            reader.readAsArrayBuffer(blob);
+          });
+        }
+
+        // Optional: Add a button to stop the video stream
+        // You may only need to call this once
+        const stopButton = document.getElementById("stopButton");
+        if (stopButton) {
+          stopButton.addEventListener("click", () => {
+            websocket.close();
+            converter.stop();
+          });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <canvas id="videoCanvas" width="640" height="480"></canvas>
+
+    <!-- <script>
+      // Initialize Broadway.js
+      var p = new Player({
+          useWorker: true, // Use worker thread for decoding
+          workerFile: "Decoder.js", // Path to Decoder.js
+          webgl: "auto", // Use webgl (auto-detect)
+          size: { width: 640, height: 480 } // Initial canvas size
+      });
+
+      // Set up the canvas
+      var canvas = document.getElementById("videoCanvas");
+      p.canvas = canvas;
+
+      // Attach the canvas where you want it in the HTML
+
+      // Example: Load H.264 data and decode
+      var h264Data = /* your H.264 stream data */;
+      p.decode(h264Data);
+    </script> -->
+  </body>
+</html>

@@ -1,1 +1,1 @@
-module.exports = require('./lib/scrcpy');
+module.exports = require("./lib/scrcpy");

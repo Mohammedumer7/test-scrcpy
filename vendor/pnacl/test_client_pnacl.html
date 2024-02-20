@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PnaclTest</title>
+</head>
+<body>
+    <div id="naclWrapper"></div>
+
+</body>
+
+<script>
+    const address = 'ws://localhost:8080';
+
+    window.onload = () => {
+        let isNaclSupported = navigator.mimeTypes['application/x-pnacl'] !== undefined
+        if (!isNaclSupported) {
+            console.error("Nacl is not supported. Sorry")
+            return
+        }
+
+        let nativeModule = document.createElement('embed')
+
+        nativeModule.addEventListener('load', () => {
+            nativeModule.postMessage('CONN' + address)
+        }, true)
+
+        nativeModule.addEventListener('message', handleMessage, true)
+
+        nativeModule.addEventListener('error', () => {
+            console.error('Cannot load nacl module: ' + nativeModule.lastError)
+        }, true)
+
+        nativeModule.setAttribute('src', './native_module/stream_decoder.nmf')
+        nativeModule.setAttribute('id', 'nacl_module')
+        nativeModule.setAttribute('type', 'application/x-pnacl')
+
+        nativeModule.setAttribute('width', 1920)
+        nativeModule.setAttribute('height', 912)
+
+        document.querySelector('#naclWrapper').appendChild(nativeModule)
+    }
+
+    handleMessage = function(msg) {
+        let strMsg = msg.data
+        if (strMsg.startsWith('stat')) {
+            console.info(strMsg.toString())
+        }
+        else {
+            console.log(strMsg.toString())
+        }
+    }
+</script>
+
+</html>
